@@ -1,7 +1,7 @@
 *.msh
 /junk
 !/junk/U
-/0
+/0/*
 !/0/U
 !/0/p
 !/0/nut
