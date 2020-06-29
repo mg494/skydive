@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-sed -i "/empty/{n;n;s/.*/\t\ttype\t\t\tempty/}" ./constant/polyMesh/boundary
