@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+#cd ${0%/*} || exit 1
+
+#./Allclean
+#fluentMeshToFoam ballute4.msh
+#sed -i "/empty/{n;n;s/.*/\t\ttype\t\t\tempty/}" ./constant/polyMesh/boundary
+#checkMesh
+#simpleFoam > log &
+#sleep 15
+foamMonitor -l postProcessing/residuals/0/residuals.dat &
+#sleep 25
+foamMonitor postProcessing/forcesIncompressible/0/forces.dat &
+

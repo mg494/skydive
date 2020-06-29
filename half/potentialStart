@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+#cd ${0%/*} || exit 1
+
+./Allclean
+fluentMeshToFoam ballute6.msh
+sed -i "/empty/{n;n;s/.*/\t\ttype\t\t\tempty/}" ./constant/polyMesh/boundary
+checkMesh
+potentialFoam > logp &

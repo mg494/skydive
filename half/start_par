@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+#cd ${0%/*} || exit 1
+
+./Allclean
+fluentMeshToFoam file_f.msh
+sed -i "/empty/{n;n;s/.*/\t\ttype\t\t\tempty/}" ./constant/polyMesh/boundary
+decomposePar -case .
+mpirun -np 4 pimpleFoam -case . > log &
+

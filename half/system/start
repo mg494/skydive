@@ -1,0 +1,10 @@
+#!/bin/sh
+cd ${0%/*} || exit 1
+
+#. $WM_PROJECTS_DIR/bin/tools/RunFunctions
+
+#./Allclean
+runApplication fluentMeshFoam file_f.msh
+runApplication simpleFoam > log 
+runApplication gnuplot residuals
+
