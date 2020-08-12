@@ -1,0 +1,139 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  7
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#includeEtc "caseDicts/mesh/generation/snappyHexMeshDict.cfg"
+
+castellatedMesh on;
+snap            off;
+addLayers       off;
+
+geometry
+{
+    ballute
+    {
+        type triSurfaceMesh;
+        file "ballute.stl";
+    }
+
+	box_wake
+	{
+		type searchableBox;
+		min	(-5 -1 -0.3);
+		max (5 60 0);
+	}
+	
+	box_ring
+	{
+		type searchableBox;
+		min	(-2.5 2.4 -0.3);
+		max (2.5 4.4 0);
+	}
+};
+
+castellatedMeshControls
+{
+    features
+    (
+//      { file "CAD.eMesh"; level 1; }
+    );
+
+    refinementSurfaces
+    {
+        ballute
+        {
+            level (3 3);
+            patchInfo { type wall; }
+			/*
+            regions
+            {
+                <inletPatch>
+                {
+                    level (2 2);
+                    patchInfo
+                    {
+                        type patch;
+                        inGroups (inlet);
+                    }
+                }
+
+                <outletPatch>
+                {
+                    level (2 2);
+                    patchInfo
+                    {
+                        type patch;
+                        inGroups (outlet);
+                    }
+                }
+            }*/
+        }
+    }
+
+    refinementRegions
+    {
+       box_wake
+        {
+            mode inside;
+            levels ((1.0 2));
+        }
+		
+		box_ring
+		{
+			mode inside;
+			levels ((1.0 2));
+		}
+    }
+
+    locationInMesh (0 -1 -0.15); // Offset from (0 0 0) to avoid
+                                     // coinciding with face or edge
+    nCellsBetweenLevels 3;
+}
+
+snapControls
+{
+//  explicitFeatureSnap    true;
+//  implicitFeatureSnap    false;
+}
+
+addLayersControls
+{
+    layers
+    {
+        "CAD.*"
+        {
+            nSurfaceLayers 2;
+        }
+    }
+
+    relativeSizes       true; // false, usually with firstLayerThickness
+    expansionRatio      1.2;
+    finalLayerThickness 0.5;
+    minThickness        1e-3;
+//  firstLayerThickness 0.01;
+
+//  maxThicknessToMedialRatio 0.6;
+}
+
+writeFlags
+(
+//    scalarLevels
+    layerSets
+    layerFields
+);
+
+mergeTolerance 1e-6;
+
+// ************************************************************************* //
