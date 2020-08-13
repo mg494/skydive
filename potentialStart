@@ -3,7 +3,13 @@
 #cd ${0%/*} || exit 1
 
 ./Allclean
-fluentMeshToFoam ballute6.msh
-sed -i "/empty/{n;n;s/.*/\t\ttype\t\t\tempty/}" ./constant/polyMesh/boundary
+blockMesh
+sed -i "/controls-start/,/controls-end/{/castellated*/{s/.*/castellatedMesh\ton;/}}" ./system/snappyHexMeshDict
+sed -i "/controls-start/,/controls-end/{/snap*/{s/.*/snap\toff;/}}" ./system/snappyHexMeshDict
+snappyHexMesh -overwrite
+extrudeMesh
+sed -i "/controls-start/,/controls-end/{/castellated*/{s/.*/castellatedMesh\toff;/}}" ./system/snappyHexMeshDict
+sed -i "/controls-start/,/controls-end/{/snap*/{s/.*/snap\ton;/}}" ./system/snappyHexMeshDict
 checkMesh
-potentialFoam > logp &
+#snappyHexMesh -overwrite
+#potentialFoam > logp &
