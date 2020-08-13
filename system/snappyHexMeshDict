@@ -15,10 +15,13 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #includeEtc "caseDicts/mesh/generation/snappyHexMeshDict.cfg"
+//controls-start
 
-castellatedMesh on;
-snap            off;
-addLayers       off;
+castellatedMesh	off;
+snap	on;
+addLayers	off;
+
+//controls-end
 
 geometry
 {
@@ -54,7 +57,7 @@ castellatedMeshControls
     {
         ballute
         {
-            level (3 3);
+            level (5 5);
             patchInfo { type wall; }
 			/*
             regions
@@ -93,7 +96,7 @@ castellatedMeshControls
 		box_ring
 		{
 			mode inside;
-			levels ((1.0 2));
+			levels ((1.0 3));
 		}
     }
 
