@@ -13,4 +13,5 @@ sed -i "/controls-start/,/controls-end/{/snap*/{s/.*/snap\ton;/}}" ./system/snap
 checkMesh
 rm constant/polyMesh/*Level
 snappyHexMesh -overwrite
-#potentialFoam > logp &
+changeDictionary
+potentialFoam > logp &
