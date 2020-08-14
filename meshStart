@@ -36,4 +36,4 @@ snappyHexMesh -overwrite
 checkMesh
 
 #starting solver for initial velocity field
-potentialFoam > logp &
+#potentialFoam > logp &
