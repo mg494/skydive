@@ -7,136 +7,157 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    version     2.0;
-    format      ascii;
-    class       dictionary;
-    object      snappyHexMeshDict;
+    version         2;
+    format          ascii;
+    class           dictionary;
+    object          snappyHexMeshDict;
 }
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#includeEtc "caseDicts/mesh/generation/snappyHexMeshDict.cfg"
-//controls-start
+castellatedMesh off;
 
-castellatedMesh	off;
-snap	on;
-addLayers	off;
+snap            off;
 
-//controls-end
+addLayers       on;
+
+castellatedMeshControls
+{
+    maxLocalCells   100000;
+    maxGlobalCells  100000000;
+    minRefinementCells 10;
+    maxLoadUnbalance 0.1;
+    nCellsBetweenLevels 5;
+    resolveFeatureAngle 30;
+    allowFreeStandingZoneFaces true;
+    features        ( );
+    refinementSurfaces
+    {
+        ballute
+        {
+            level           ( 5 5 );
+            patchInfo
+            {
+                type            wall;
+            }
+        }
+    }
+    refinementRegions
+    {
+        box_wake
+        {
+            mode            inside;
+            levels          ( ( 1 2 ) );
+        }
+        box_near
+        {
+            mode            inside;
+            levels          ( ( 1 4 ) );
+        }
+        circ_front
+        {
+            mode            inside;
+            levels          ( ( 1 4 ) );
+        }
+    }
+    locationInMesh  ( 0 -1 -0.15 );
+}
+
+snapControls
+{
+    nSmoothPatch    3;
+    tolerance       2;
+    nSolveIter      100;
+    nRelaxIter      5;
+    nFeatureSnapIter 10;
+    explicitFeatureSnap false;
+    multiRegionFeatureSnap false;
+    implicitFeatureSnap true;
+}
+
+addLayersControls
+{
+    featureAngle    100;
+    slipFeatureAngle 30;
+    nLayerIter      50;
+    nRelaxedIter    20;
+    nRelaxIter      5;
+    nGrow           0;
+    nSmoothSurfaceNormals 1;
+    nSmoothNormals  3;
+    nSmoothThickness 10;
+    maxFaceThicknessRatio 0.5;
+    maxThicknessToMedialRatio 0.3;
+    minMedialAxisAngle 90;
+    nMedialAxisIter 10;
+    nBufferCellsNoExtrude 0;
+    additionalReporting false;
+    relativeSizes   false;
+    expansionRatio  1.15;
+    minThickness    0.0001;
+    firstLayerThickness 0.002;
+    layers
+    {
+        ballute
+        {
+            nSurfaceLayers  4;
+        }
+    }
+}
+
+meshQualityControls
+{
+    maxNonOrtho     65;
+    maxBoundarySkewness 20;
+    maxInternalSkewness 4;
+    maxConcave      80;
+    minVol          1e-13;
+    minTetQuality   -1e+30;
+    minArea         -1;
+    minTwist        0.02;
+    minDeterminant  0.001;
+    minFaceWeight   0.05;
+    minVolRatio     0.01;
+    minTriangleTwist -1;
+    nSmoothScale    4;
+    errorReduction  0.75;
+    relaxed
+    {
+        maxNonOrtho     75;
+    }
+}
+
+debug           0;
+
+mergeTolerance  1e-06;
 
 geometry
 {
     ballute
     {
-        type triSurfaceMesh;
-        file "ballute.stl";
+        type            triSurfaceMesh;
+        file            "ballute.stl";
     }
-
-	box_wake
-	{
-		type searchableBox;
-		min	(-5 -1 -0.3);
-		max (5 60 0);
-	}
-	
-	box_ring
-	{
-		type searchableBox;
-		min	(-2.5 2.4 -0.3);
-		max (2.5 4.4 0);
-	}
-};
-
-castellatedMeshControls
-{
-    features
-    (
-//      { file "CAD.eMesh"; level 1; }
-    );
-
-    refinementSurfaces
+    box_wake
     {
-        ballute
-        {
-            level (5 5);
-            patchInfo { type wall; }
-			/*
-            regions
-            {
-                <inletPatch>
-                {
-                    level (2 2);
-                    patchInfo
-                    {
-                        type patch;
-                        inGroups (inlet);
-                    }
-                }
-
-                <outletPatch>
-                {
-                    level (2 2);
-                    patchInfo
-                    {
-                        type patch;
-                        inGroups (outlet);
-                    }
-                }
-            }*/
-        }
+        type            searchableBox;
+        min             ( -5.5 -2 -0.3 );
+        max             ( 5.5 65 0 );
     }
-
-    refinementRegions
+    box_near
     {
-       box_wake
-        {
-            mode inside;
-            levels ((1.0 2));
-        }
-		
-		box_ring
-		{
-			mode inside;
-			levels ((1.0 3));
-		}
+        type            searchableBox;
+        min             ( -2.5 2 -0.3 );
+        max             ( 2.5 5 0 );
     }
-
-    locationInMesh (0 -1 -0.15); // Offset from (0 0 0) to avoid
-                                     // coinciding with face or edge
-    nCellsBetweenLevels 3;
+    circ_front
+    {
+        type            searchableCylinder;
+        point1          ( 0 2 -0.3 );
+        point2          ( 0 2 0 );
+        radius          2.5;
+    }
 }
 
-snapControls
-{
-//  explicitFeatureSnap    true;
-//  implicitFeatureSnap    false;
-}
+writeFlags      ( layerSets layerFields );
 
-addLayersControls
-{
-    layers
-    {
-        "CAD.*"
-        {
-            nSurfaceLayers 2;
-        }
-    }
-
-    relativeSizes       true; // false, usually with firstLayerThickness
-    expansionRatio      1.2;
-    finalLayerThickness 0.5;
-    minThickness        1e-3;
-//  firstLayerThickness 0.01;
-
-//  maxThicknessToMedialRatio 0.6;
-}
-
-writeFlags
-(
-//    scalarLevels
-    layerSets
-    layerFields
-);
-
-mergeTolerance 1e-6;
 
 // ************************************************************************* //
