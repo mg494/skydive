@@ -1,6 +1,6 @@
 *.msh
 /junk
-!/junk/U
+
 /*[0-999999]*
 /postProcessing
 
