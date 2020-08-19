@@ -2,11 +2,13 @@ import matplotlib.pyplot as plt
 import re
 import numpy as np
 import pandas as pd
-
+from optparse import OptionParser
+import os,sys, argparse
+from datetime import datetime
 
 ###--------------------store function--------------------------###
 
-def storeForces(case,dim=2):
+def storeForces(case):
 	# make regular expressions
 	scalarStr = r"([0-9.eE\-+]+)"
 	vectorStr = r"\(([0-9.eE\-+]+)\s([0-9.eE\-+]+)\s([0-9.eE\-+]+)\)"
@@ -60,7 +62,7 @@ def plotForces(case,start=1):
 	df = pd.read_csv("./storage/"+case+".csv")
 	print(df.size)
 	fig1, axs = plt.subplots(2,1)
-	fig1.suptitle("Kräfte stationär")
+	fig1.suptitle("Kraefte stationaer")
 	if start != 1:
 		df = df.truncate(before=start)
 		print(df.size)
@@ -96,13 +98,74 @@ def compare(cases,niter = 0):
 		count += 1
 
 	plt.show()
-#	print(dfs)
-#	print(type(dfs))
 
 
-case = "ballute6_linearU"
+def initLog():
+	logfile = open(os.getcwd()+"/resultlog","w")
+	now = datetime.now()
+	timestr = now.strftime("%d-%m-%Y_%H:%M:%S")
+	logfile.write(timestr+"\t"+"initialzied resultlog"+"\n")
+
+	logfile.close()
+
+def addLog(description,new_result):
+	logfile = open(os.getcwd()+"/resultlog","a+")
+	now = datetime.now()
+	timestr = now.strftime("%d-%m-%Y_%H:%M:%S")
+	if not new_result:
+		logfile.write("------\n")
+	logfile.write(timestr+"\t"+description+"\n")
+	logfile.close()
+
+
+
+"""
+case = "ballute_snappy"
 #cases = ["linUpw", "upw"]
 
 storeForces(case)
-plotForces(case,start=1500)
+plotForces(case,start=100)
 #compare(cases, niter = 300)
+"""
+
+
+if __name__ == "__main__":
+	# throw exception if no arguments are provided
+	if len(sys.argv) < 2:
+		sys.exit("error: arguments needed")
+
+	# init method is initialising folder (date_no) and logs description in file
+	if sys.argv[1] == "init":
+		initLog()
+
+	elif sys.argv[1] == "add":
+		if len(sys.argv) < 3:
+			sys.exit("error: description needed")
+		for index, arg in enumerate(sys.argv):
+			if arg in ["--append","-a"]:
+				new_result=True
+				break
+			else:
+				new_result=False
+		addLog(sys.argv[-1],new_result)
+	# handle arguments and their options
+	elif sys.argv[1] == "store":
+		if len(sys.argv) < 3:
+			sys.exit("error: case name needed")
+		else:
+			storeForces(sys.argv[2])
+
+	elif sys.argv[1] == "plot":
+		print(sys.argv)
+		for index, arg in enumerate(sys.argv):
+			if arg in ["--start", "-s"]:
+				iteration = int(sys.argv[index])
+			else:
+				iteration = 1
+		plotForces(sys.argv[2],iteration)
+
+	elif sys.argv[1] == "compare":
+		compare()
+	else:
+		print("unknown command")
+
