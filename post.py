@@ -103,20 +103,26 @@ def compare(cases,niter = 0):
 def initLog():
 	logfile = open(os.getcwd()+"/resultlog","w")
 	now = datetime.now()
-	timestr = now.strftime("%d-%m-%Y_%H:%M:%S")
+	timestr = now.strftime("%d-%m-%Y_%H:%M")
 	logfile.write(timestr+"\t"+"initialzied resultlog"+"\n")
-
 	logfile.close()
+	return timestr
 
-def addLog(description,new_result):
+def addLog(description,new_result=True):
 	logfile = open(os.getcwd()+"/resultlog","a+")
 	now = datetime.now()
-	timestr = now.strftime("%d-%m-%Y_%H:%M:%S")
-	if not new_result:
+	timestr = now.strftime("%d-%m-%Y_%H:%M")
+	if new_result:
 		logfile.write("------\n")
-	logfile.write(timestr+"\t"+description+"\n")
+		logfile.write(timestr+"\t"+description+"\n")
+		logfile.close()
+		return timestr
+	logfile.write("\t\t\t"+description+"\n")
 	logfile.close()
-
+def makeFolder():
+	now = datetime.now()
+	timestr = now.strftime("%d-%m-%Y_%H-%M")
+	os.makedirs(os.getcwd()+"/storage/"+timestr)
 
 
 """
@@ -136,19 +142,21 @@ if __name__ == "__main__":
 
 	# init method is initialising folder (date_no) and logs description in file
 	if sys.argv[1] == "init":
-		initLog()
+		folderName = initLog()
 
+	# add method is adding a new result to the resultlog
+	# with option -a an additional string can be appended to the latest resultlog
 	elif sys.argv[1] == "add":
-		if len(sys.argv) < 3:
+		if len(sys.argv) < 3 or (sys.argv[2] == "-a" and len(sys.argv) < 4):
 			sys.exit("error: description needed")
-		for index, arg in enumerate(sys.argv):
-			if arg in ["--append","-a"]:
-				new_result=True
-				break
-			else:
-				new_result=False
-		addLog(sys.argv[-1],new_result)
-	# handle arguments and their options
+
+		if "-a" in sys.argv[1:]:
+			addLog(sys.argv[-1],new_result=False)
+		else:
+			newFolder = addLog(sys.argv[-1])
+			os.makedirs(os.getcwd()+"/storage/"+newFolder)
+
+	# plot method stores the results from /postProcessing in dataframe for plotting
 	elif sys.argv[1] == "store":
 		if len(sys.argv) < 3:
 			sys.exit("error: case name needed")
