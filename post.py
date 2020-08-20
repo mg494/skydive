@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from optparse import OptionParser
 import os,sys, argparse
+from glob import glob
 from datetime import datetime
 
 ###--------------------store function--------------------------###
@@ -135,7 +136,7 @@ def initLog():
 	logfile = open(os.getcwd()+"/resultlog","w")
 	now = datetime.now()
 	timestr = now.strftime("%Y-%m-%d_%H-%M")
-	logfile.write(timestr+"\t"+"initialzied resultlog"+"\n")
+	logfile.write(timestr+"\t"+"initialized resultlog"+"\n")
 	logfile.close()
 	return timestr
 
@@ -196,18 +197,21 @@ if __name__ == "__main__":
 		elif sys.argv[2] == "yPlus":
 			frames_to_store=getyPlus()
 
-		#determine where to store
-		file = open(os.getcwd()+"/resultlog","r")
+		# determine where to store
+		file = open("./resultlog","r")
 		lines = file.readlines()
+		directories = []
 		for line in lines:
 			print(line)
+			match = re.search(r'\d{4}-\d{2}-\d{2}_\d{2}-\d{2}', line)
+			if match is not None: directories.append(match.group())
 
 		# storing the dataframes
 		for frame in frames_to_store:
 			name = frame.patch[0]
 			frame.drop("patch",axis=1,inplace=True)
 			frame.sort_index(ascending=True,inplace=True)
-			frame.to_csv("./storage/"+name+".csv")
+			frame.to_csv("./storage/"+directories[-1]+"/yPlus_"+name+".csv")
 
 	elif sys.argv[1] == "plot":
 		print(sys.argv)
