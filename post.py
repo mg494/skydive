@@ -8,7 +8,7 @@ from datetime import datetime
 
 ###--------------------store function--------------------------###
 
-def storeForces(case):
+def getForces(case):
 	# make regular expressions
 	scalarStr = r"([0-9.eE\-+]+)"
 	vectorStr = r"\(([0-9.eE\-+]+)\s([0-9.eE\-+]+)\s([0-9.eE\-+]+)\)"
@@ -56,6 +56,37 @@ def storeForces(case):
 
 	force_df.to_csv("./storage/"+case+".csv")
 
+def getyPlus():
+	source_path = os.getcwd()+"/postProcessing/yPlus/0"
+	filelist = os.listdir(source_path)
+
+	# get patch names from abitrary file
+	file = open(source_path+"/"+filelist[0])
+	lines = file.readlines()
+	lines = lines[2:]
+	patchnames = []
+	for line in lines:
+		patchnames.append(line.split()[1])
+
+	# get patch values
+	t = []; patch = []; min = []; max = []
+	for filename in filelist:
+		file = open(source_path+"/"+filename)
+		lines = file.readlines()
+
+		for line in lines[2:]:	# skip header lines
+			t.append(int(line.split()[0]))
+			patch.append(line.split()[1])
+			min.append(float(line.split()[2]))
+			max.append(float(line.split()[3]))
+
+	all_files = pd.DataFrame(data={"patch":patch,"min":min,"max":max})
+	all_files.index = t
+	all_files.index.name = "Iter"
+
+	all_files.sort_values("patch",inplace=True)
+	data_by_patches = np.split(all_files,[18],axis=0)
+	return data_by_patches
 
 ##-----------------plot-function----------------------###
 def plotForces(case,start=1):
@@ -103,7 +134,7 @@ def compare(cases,niter = 0):
 def initLog():
 	logfile = open(os.getcwd()+"/resultlog","w")
 	now = datetime.now()
-	timestr = now.strftime("%d-%m-%Y_%H:%M")
+	timestr = now.strftime("%Y-%m-%d_%H-%M")
 	logfile.write(timestr+"\t"+"initialzied resultlog"+"\n")
 	logfile.close()
 	return timestr
@@ -111,7 +142,7 @@ def initLog():
 def addLog(description,new_result=True):
 	logfile = open(os.getcwd()+"/resultlog","a+")
 	now = datetime.now()
-	timestr = now.strftime("%d-%m-%Y_%H:%M")
+	timestr = now.strftime("%Y-%m-%d_%H-%M")
 	if new_result:
 		logfile.write("------\n")
 		logfile.write(timestr+"\t"+description+"\n")
@@ -119,10 +150,6 @@ def addLog(description,new_result=True):
 		return timestr
 	logfile.write("\t\t\t"+description+"\n")
 	logfile.close()
-def makeFolder():
-	now = datetime.now()
-	timestr = now.strftime("%d-%m-%Y_%H-%M")
-	os.makedirs(os.getcwd()+"/storage/"+timestr)
 
 
 """
@@ -156,12 +183,31 @@ if __name__ == "__main__":
 			newFolder = addLog(sys.argv[-1])
 			os.makedirs(os.getcwd()+"/storage/"+newFolder)
 
-	# plot method stores the results from /postProcessing in dataframe for plotting
+	# store method stores the results from /postProcessing in dataframe for plotting
+	# the name of the entity to store is provided as an argument
+	# the method reads the latest folder from the resultlog and stores the dataframe there
 	elif sys.argv[1] == "store":
 		if len(sys.argv) < 3:
-			sys.exit("error: case name needed")
-		else:
-			storeForces(sys.argv[2])
+			sys.exit("error: entity name needed")
+
+		# get the values
+		if sys.argv[2] == "forces":
+			frames_to_store=getForces(sys.argv[2])
+		elif sys.argv[2] == "yPlus":
+			frames_to_store=getyPlus()
+
+		#determine where to store
+		file = open(os.getcwd()+"/resultlog","r")
+		lines = file.readlines()
+		for line in lines:
+			print(line)
+
+		# storing the dataframes
+		for frame in frames_to_store:
+			name = frame.patch[0]
+			frame.drop("patch",axis=1,inplace=True)
+			frame.sort_index(ascending=True,inplace=True)
+			frame.to_csv("./storage/"+name+".csv")
 
 	elif sys.argv[1] == "plot":
 		print(sys.argv)
