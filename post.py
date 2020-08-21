@@ -9,7 +9,7 @@ from datetime import datetime
 
 ###--------------------store function--------------------------###
 
-def getForces(case):
+def getForces():
 	# make regular expressions
 	scalarStr = r"([0-9.eE\-+]+)"
 	vectorStr = r"\(([0-9.eE\-+]+)\s([0-9.eE\-+]+)\s([0-9.eE\-+]+)\)"
@@ -55,7 +55,8 @@ def getForces(case):
 	force_df.index = t
 	force_df.index.name = "Iter"
 
-	force_df.to_csv("./storage/"+case+".csv")
+	return force_df
+	#	force_df.to_csv("./storage/"+case+".csv")
 
 def getyPlus():
 	source_path = os.getcwd()+"/postProcessing/yPlus/0"
@@ -191,37 +192,108 @@ if __name__ == "__main__":
 		if len(sys.argv) < 3:
 			sys.exit("error: entity name needed")
 
-		# get the values
-		if sys.argv[2] == "forces":
-			frames_to_store=getForces(sys.argv[2])
-		elif sys.argv[2] == "yPlus":
-			frames_to_store=getyPlus()
-
 		# determine where to store
 		file = open("./resultlog","r")
 		lines = file.readlines()
 		directories = []
 		for line in lines:
-			print(line)
 			match = re.search(r'\d{4}-\d{2}-\d{2}_\d{2}-\d{2}', line)
 			if match is not None: directories.append(match.group())
+		if len(directories) < 1: sys.exit("no entries in resultlog")
 
+		# get the values
 		# storing the dataframes
-		for frame in frames_to_store:
-			name = frame.patch[0]
-			frame.drop("patch",axis=1,inplace=True)
-			frame.sort_index(ascending=True,inplace=True)
-			frame.to_csv("./storage/"+directories[-1]+"/yPlus_"+name+".csv")
+		if sys.argv[2] == "forces":
+			frames_to_store = getForces()
+			frames_to_store.to_csv("./storage/"+directories[-1]+"/forces.csv")
+		elif sys.argv[2] == "yPlus":
+			frames_to_store = getyPlus()
+			for frame in frames_to_store:
+				name = frame.patch[0]
+				frame.drop("patch",axis=1,inplace=True)
+				frame.sort_index(ascending=True,inplace=True)
+				frame.to_csv("./storage/"+directories[-1]+"/yPlus_"+name+".csv")
 
+	# plot method should plot the stored data from the latest directory
 	elif sys.argv[1] == "plot":
-		print(sys.argv)
-		for index, arg in enumerate(sys.argv):
-			if arg in ["--start", "-s"]:
-				iteration = int(sys.argv[index])
-			else:
-				iteration = 1
-		plotForces(sys.argv[2],iteration)
+		if len(sys.argv) < 3:
+			sys.exit("error: entity name needed")
 
+		# handle options
+		if  "-s" in sys.argv[3:]:
+			start = int(sys.argv[-1])
+		else:
+			start=1
+		# where to read from
+		directory = sys.argv[3]
+
+		# handle entities to plot
+		if sys.argv[2] == "forces":
+			df = pd.read_csv(directory+"forces.csv")
+			print(df.size)
+			fig1, axs = plt.subplots(2,1)
+			fig1.suptitle("Kraefte stationaer")
+			if start != 1:
+				df = df.truncate(before=start)
+				print(df.size)
+
+			axs[0].plot(df.index,df["fpx"],label='fpx')
+			axs[0].plot(df.index,df["fpy"],label='fpy')
+			axs[0].set_ylabel('Pressure Forces')
+			axs[0].legend(loc='best')
+
+			axs[1].plot(df.index,df["fvx"],label='fvx')
+			axs[1].plot(df.index,df["fvy"],label='fvy')
+			axs[1].set_ylabel('Viscous Forces')
+			axs[1].legend(loc='best')
+
+			axs[-1].set_xlabel('Iterations')
+			print(df.head())
+			print(df.tail())
+			plt.savefig(directory+"forces.png")
+			plt.show()
+
+		elif sys.argv[2] == "yPlus":
+
+			fig = plt.figure()
+			ax1 = fig.gca()
+
+			frames = glob(directory+"yPlus_*")
+			for patch in frames:
+				df = pd.read_csv(patch)
+				ax1.plot(df.index,df.iloc[:,1].values,df.index,df.iloc[:,2].values)
+
+			plt.show()
+
+			"""
+			df =f pd.read_csv(directory+"yPlus"+".csv")
+			print(df.size)
+			fig1, axs = plt.subplots(2,1)
+			fig1.suptitle("Kraefte stationaer")
+			if start != 1:
+				df = df.truncate(before=start)
+				print(df.size)
+
+			axs[0].plot(df.index,df["fpx"],label='fpx')
+			axs[0].plot(df.index,df["fpy"],label='fpy')
+			axs[0].set_ylabel('Pressure Forces')
+			axs[0].legend(loc='best')
+
+			axs[1].plot(df.index,df["fvx"],label='fvx')
+			axs[1].plot(df.index,df["fvy"],label='fvy')
+			axs[1].set_ylabel('Viscous Forces')
+			axs[1].legend(loc='best')
+
+			axs[-1].set_xlabel('Iterations')
+			print(df.head())
+			print(df.tail())
+			plt.saveas(directory+"forces.png")
+			plt.show()
+			"""
+
+#		plotForces(sys.argv[2],start)
+
+	# compare method
 	elif sys.argv[1] == "compare":
 		compare()
 	else:
