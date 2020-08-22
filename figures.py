@@ -6,21 +6,13 @@ casepath = "/home/marc/OpenFOAM/marc-7/run/"
 filename = casepath+casename+"/"+casename+".OpenFOAM"
 
 reader = OpenFOAMReader(FileName=filename)
+timesteps = reader.TimestepValues
+
 Show()
 Render()
 
-readerRep = GetRepresentation()
 
-view = GetActiveView()
-print(view)
-layout = GetLayout()
-location = layout.GetViewLocation(view)
-layout.MaximizeCell(location)
-
-ColorBy(readerRep, ("POINTS", "U"))
-UpdateScalarBars()
-Render()
-
+# where to write figures
 file = open("./resultlog","r")
 lines = file.readlines()
 directories = []
@@ -29,6 +21,23 @@ for line in lines:
 	if match is not None: directories.append(match.group())
 if len(directories)<1: sys.exit("error: no entries in resultlog")
 
-WriteImage("./storage/"+directories[-1]+"/test_image.png")
+
+for time in timesteps:
+
+	view = GetActiveView()
+	layout = GetLayout()
+	location = layout.GetViewLocation(view)
+	layout.MaximizeCell(location)
+
+	readerRep = GetRepresentation()
+	ColorBy(readerRep, ("POINTS", "U"))
+	UpdateScalarBars()
+
+	view.ViewTime = time
+	print(view.ViewTime)
+
+	Render()
+
+	WriteImage("./storage/"+directories[-1]+"/velocity_t{}.png".format(int(time)))
 
 #SaveScreenshot(casepath+"storage/test_image.jpeg")
