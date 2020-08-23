@@ -56,7 +56,6 @@ def getForces():
 	force_df.index.name = "Iter"
 
 	return force_df
-	#	force_df.to_csv("./storage/"+case+".csv")
 
 def getyPlus():
 	source_path = os.getcwd()+"/postProcessing/yPlus/0"
@@ -156,15 +155,6 @@ def addLog(description,new_result=True):
 def plotFrameToAxis(axindex,comp):
 	axs[axindex].plot(df.index,df["f"+comp],label='f'+comp)
 
-"""
-case = "ballute_snappy"
-#cases = ["linUpw", "upw"]
-
-storeForces(case)
-plotForces(case,start=100)
-#compare(cases, niter = 300)
-"""
-
 
 if __name__ == "__main__":
 	# throw exception if no arguments are provided
@@ -226,9 +216,7 @@ if __name__ == "__main__":
 		components = "xy"
 		for index,option in enumerate(sys.argv):
 			if  "-s" in option:
-				print(index)
 				start = int(sys.argv[index+1])
-				print(start)
 			if "-c" in option:
 				components = sys.argv[index+1]
 
@@ -248,13 +236,6 @@ if __name__ == "__main__":
 				plotFrameToAxis(0,"p"+component)
 				plotFrameToAxis(1,"v"+component)
 
-			"""
-			axs[0].plot(df.index,df["fpx"],label='fpx')
-			axs[0].plot(df.index,df["fpy"],label='fpy')
-
-			axs[1].plot(df.index,df["fvx"],label='fvx')
-			axs[1].plot(df.index,df["fvy"],label='fvy')
-			"""
 			# labels
 			axs[0].set_ylabel('Pressure Forces')
 			axs[0].legend(loc='best')
@@ -269,47 +250,34 @@ if __name__ == "__main__":
 
 		elif sys.argv[2] == "yPlus":
 
+			# handle options
+			start = 1
+			patchnames = ""
+			for index,option in enumerate(sys.argv):
+				if  "-s" in option:
+					start = int(sys.argv[index+1])
+				if "-p" in option:
+					patchnames = sys.argv[index+1].split()
+
 			fig = plt.figure()
 			ax1 = fig.gca()
 			fig.suptitle("yPlus values")
 
 			frames = glob(directory+"yPlus_*")
 			for patch in frames:
-				df = pd.read_csv(patch)
-				ax1.plot(df.index,df.iloc[:,1].values,label="min")
-				ax1.plot(df.index,df.iloc[:,2].values,label="max")
+				for patchname in patchnames:
+					if patch.find(patchname) is not -1:
+						df = pd.read_csv(patch)
+						df.index = df.index.values *100
+						if start is not 1:
+							df = df.truncate(before=start)
+
+						ax1.plot(df.index,df.iloc[:,1].values,label="{} min".format(patchname))
+						ax1.plot(df.index,df.iloc[:,2].values,label="{} max".format(patchname))
 
 			ax1.legend(loc="best")
-			plt.savefig(directory+"yPlus.png")
+			plt.savefig(directory+"yPlus_t{}.png".format(start))
 			plt.show()
-
-			"""
-			df =f pd.read_csv(directory+"yPlus"+".csv")
-			print(df.size)
-			fig1, axs = plt.subplots(2,1)
-			fig1.suptitle("Kraefte stationaer")
-			if start != 1:
-				df = df.truncate(before=start)
-				print(df.size)
-
-			axs[0].plot(df.index,df["fpx"],label='fpx')
-			axs[0].plot(df.index,df["fpy"],label='fpy')
-			axs[0].set_ylabel('Pressure Forces')
-			axs[0].legend(loc='best')
-
-			axs[1].plot(df.index,df["fvx"],label='fvx')
-			axs[1].plot(df.index,df["fvy"],label='fvy')
-			axs[1].set_ylabel('Viscous Forces')
-			axs[1].legend(loc='best')
-
-			axs[-1].set_xlabel('Iterations')
-			print(df.head())
-			print(df.tail())
-			plt.saveas(directory+"forces.png")
-			plt.show()
-			"""
-
-#		plotForces(sys.argv[2],start)
 
 	# compare method
 	elif sys.argv[1] == "compare":
