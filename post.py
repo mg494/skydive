@@ -2,11 +2,14 @@ import matplotlib.pyplot as plt
 import re
 import numpy as np
 import pandas as pd
-
+from optparse import OptionParser
+import os,sys, argparse
+from glob import glob
+from datetime import datetime
 
 ###--------------------store function--------------------------###
 
-def storeForces(case,dim=2):
+def getForces():
 	# make regular expressions
 	scalarStr = r"([0-9.eE\-+]+)"
 	vectorStr = r"\(([0-9.eE\-+]+)\s([0-9.eE\-+]+)\s([0-9.eE\-+]+)\)"
@@ -52,15 +55,46 @@ def storeForces(case,dim=2):
 	force_df.index = t
 	force_df.index.name = "Iter"
 
-	force_df.to_csv("./storage/"+case+".csv")
+	return force_df
 
+def getyPlus():
+	source_path = os.getcwd()+"/postProcessing/yPlus/0"
+	filelist = os.listdir(source_path)
+
+	# get patch names from abitrary file
+	file = open(source_path+"/"+filelist[0])
+	lines = file.readlines()
+	lines = lines[2:]
+	patchnames = []
+	for line in lines:
+		patchnames.append(line.split()[1])
+
+	# get patch values
+	t = []; patch = []; min = []; max = []
+	for filename in filelist:
+		file = open(source_path+"/"+filename)
+		lines = file.readlines()
+
+		for line in lines[2:]:	# skip header lines
+			t.append(int(line.split()[0]))
+			patch.append(line.split()[1])
+			min.append(float(line.split()[2]))
+			max.append(float(line.split()[3]))
+
+	all_files = pd.DataFrame(data={"patch":patch,"min":min,"max":max})
+	all_files.index = t
+	all_files.index.name = "Iter"
+
+	all_files.sort_values("patch",inplace=True)
+	data_by_patches = np.split(all_files,[18],axis=0)
+	return data_by_patches
 
 ##-----------------plot-function----------------------###
 def plotForces(case,start=1):
 	df = pd.read_csv("./storage/"+case+".csv")
 	print(df.size)
 	fig1, axs = plt.subplots(2,1)
-	fig1.suptitle("Kräfte stationär")
+	fig1.suptitle("Kraefte stationaer")
 	if start != 1:
 		df = df.truncate(before=start)
 		print(df.size)
@@ -96,13 +130,161 @@ def compare(cases,niter = 0):
 		count += 1
 
 	plt.show()
-#	print(dfs)
-#	print(type(dfs))
 
 
-case = "ballute6_linearU"
-#cases = ["linUpw", "upw"]
+def initLog():
+	logfile = open(os.getcwd()+"/resultlog","w")
+	now = datetime.now()
+	timestr = now.strftime("%Y-%m-%d_%H-%M")
+	logfile.write(timestr+"\t"+"initialized resultlog"+"\n")
+	logfile.close()
+	return timestr
 
-storeForces(case)
-plotForces(case,start=1500)
-#compare(cases, niter = 300)
+def addLog(description,new_result=True):
+	logfile = open(os.getcwd()+"/resultlog","a+")
+	now = datetime.now()
+	timestr = now.strftime("%Y-%m-%d_%H-%M")
+	if new_result:
+		logfile.write("------\n")
+		logfile.write(timestr+"\t"+description+"\n")
+		logfile.close()
+		return timestr
+	logfile.write("\t\t\t"+description+"\n")
+	logfile.close()
+
+def plotFrameToAxis(axindex,comp):
+	axs[axindex].plot(df.index,df["f"+comp],label='f'+comp)
+
+
+if __name__ == "__main__":
+	# throw exception if no arguments are provided
+	if len(sys.argv) < 2:
+		sys.exit("error: arguments needed")
+
+	# init method is initialising folder (date_no) and logs description in file
+	if sys.argv[1] == "init":
+		folderName = initLog()
+
+	# add method is adding a new result to the resultlog
+	# with option -a an additional string can be appended to the latest resultlog
+	elif sys.argv[1] == "add":
+		if len(sys.argv) < 3 or (sys.argv[2] == "-a" and len(sys.argv) < 4):
+			sys.exit("error: description needed")
+
+		if "-a" in sys.argv[1:]:
+			addLog(sys.argv[-1],new_result=False)
+		else:
+			newFolder = addLog(sys.argv[-1])
+			os.makedirs(os.getcwd()+"/storage/"+newFolder)
+
+	# store method stores the results from /postProcessing in dataframe for plotting
+	# the name of the entity to store is provided as an argument
+	# the method reads the latest folder from the resultlog and stores the dataframe there
+	elif sys.argv[1] == "store":
+		if len(sys.argv) < 3:
+			sys.exit("error: entity name needed")
+
+		# determine where to store
+		file = open("./resultlog","r")
+		lines = file.readlines()
+		directories = []
+		for line in lines:
+			match = re.search(r'\d{4}-\d{2}-\d{2}_\d{2}-\d{2}', line)
+			if match is not None: directories.append(match.group())
+		if len(directories) < 1: sys.exit("no entries in resultlog")
+
+		# get the values
+		# storing the dataframes
+		if sys.argv[2] == "forces":
+			frames_to_store = getForces()
+			frames_to_store.to_csv("./storage/"+directories[-1]+"/forces.csv")
+		elif sys.argv[2] == "yPlus":
+			frames_to_store = getyPlus()
+			for frame in frames_to_store:
+				name = frame.patch[0]
+				frame.drop("patch",axis=1,inplace=True)
+				frame.sort_index(ascending=True,inplace=True)
+				frame.to_csv("./storage/"+directories[-1]+"/yPlus_"+name+".csv")
+
+	# plot method should plot the stored data from the latest directory
+	elif sys.argv[1] == "plot":
+		if len(sys.argv) < 3:
+			sys.exit("error: entity name needed")
+
+		# handle options
+		start = 1
+		components = "xy"
+		for index,option in enumerate(sys.argv):
+			if  "-s" in option:
+				start = int(sys.argv[index+1])
+			if "-c" in option:
+				components = sys.argv[index+1]
+
+
+		# where to read from
+		directory = sys.argv[3]
+
+		# handle entities to plot
+		if sys.argv[2] == "forces":
+			df = pd.read_csv(directory+"forces.csv")
+			fig1, axs = plt.subplots(2,1)
+			fig1.suptitle("Kraefte stationaer")
+			if start is not 1:
+				df = df.truncate(before=start)
+
+			for component in components:
+				plotFrameToAxis(0,"p"+component)
+				plotFrameToAxis(1,"v"+component)
+			if len(components) > 1:
+				component = ""
+
+			# labels
+			axs[0].set_ylabel('Pressure Forces')
+			axs[0].legend(loc='best')
+			axs[1].set_ylabel('Viscous Forces')
+			axs[1].legend(loc='best')
+
+			axs[-1].set_xlabel('Iterations')
+			print(df.head())
+			print(df.tail())
+			plt.savefig(directory+"forces_"+component+"t_"+str(start)+".png")
+			plt.show()
+
+		elif sys.argv[2] == "yPlus":
+
+			# handle options
+			start = 1
+			patchnames = ""
+			for index,option in enumerate(sys.argv):
+				if  "-s" in option:
+					start = int(sys.argv[index+1])
+				if "-p" in option:
+					patchnames = sys.argv[index+1].split()
+
+			fig = plt.figure()
+			ax1 = fig.gca()
+			fig.suptitle("yPlus values")
+
+			frames = glob(directory+"yPlus_*.csv")
+			for patch in frames:
+				for patchname in patchnames:
+					if patch.find(patchname) is not -1:
+						df = pd.read_csv(patch)
+						df.index = df.index.values *100
+						if start is not 1:
+							df = df.truncate(before=start)
+
+						ax1.plot(df.index,df.iloc[:,1].values,label="{} min".format(patchname))
+						ax1.plot(df.index,df.iloc[:,2].values,label="{} max".format(patchname))
+
+			ax1.legend(loc="best")
+			plt.savefig(directory+"yPlus_{}_t{}.png".format(patchnames[:],start))
+			plt.show()
+
+	# compare method
+	elif sys.argv[1] == "compare":
+		compare()
+
+	else:
+		print("unknown command")
+
