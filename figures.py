@@ -10,7 +10,7 @@ reader.SkipZeroTime = 0
 reader.Refresh()
 
 print(reader.SkipZeroTime)
-timesteps = reader.TimestepValues
+timesteps = [0]+reader.TimestepValues[:]
 print(timesteps)
 Show()
 Render()
@@ -25,6 +25,7 @@ for line in lines:
 	if match is not None: directories.append(match.group())
 if len(directories)<1: sys.exit("error: no entries in resultlog")
 
+
 # write initial field
 view = GetActiveView()
 layout = GetLayout()
@@ -34,30 +35,31 @@ layout.MaximizeCell(location)
 readerRep = GetRepresentation()
 ColorBy(readerRep, ("POINTS", "U"))
 UpdateScalarBars()
-
-view.ViewTime = 0
-
 Render()
 
-WriteImage("./storage/"+directories[-1]+"/velocity_t0.png")
+for camera_position in range(2):
+	if camera_position is 1:
+		# control the camera
+		view.CameraPosition = [0,3,14]
+		view.CameraFocalPoint = [0,3,0]
 
 
-for time in timesteps:
+	for time in timesteps:
 
-	view = GetActiveView()
-	layout = GetLayout()
-	location = layout.GetViewLocation(view)
-	layout.MaximizeCell(location)
+		view = GetActiveView()
+		layout = GetLayout()
+		location = layout.GetViewLocation(view)
+		layout.MaximizeCell(location)
 
-	readerRep = GetRepresentation()
-	ColorBy(readerRep, ("POINTS", "U"))
-	UpdateScalarBars()
+		readerRep = GetRepresentation()
+		ColorBy(readerRep, ("POINTS", "U"))
+		UpdateScalarBars()
 
-	view.ViewTime = time
-	print(view.ViewTime)
+		view.ViewTime = time
+		print(view.ViewTime)
 
-	Render()
+		Render()
 
-	WriteImage("./storage/"+directories[-1]+"/velocity_t{}.png".format(int(time)))
+		WriteImage("./storage/"+directories[-1]+"/velocity_{}_t{}.png".format(camera_position,int(time)))
 
 #SaveScreenshot(casepath+"storage/test_image.jpeg")
