@@ -235,6 +235,8 @@ if __name__ == "__main__":
 			for component in components:
 				plotFrameToAxis(0,"p"+component)
 				plotFrameToAxis(1,"v"+component)
+			if len(components) > 1:
+				component = ""
 
 			# labels
 			axs[0].set_ylabel('Pressure Forces')
@@ -245,7 +247,7 @@ if __name__ == "__main__":
 			axs[-1].set_xlabel('Iterations')
 			print(df.head())
 			print(df.tail())
-			plt.savefig(directory+"forces_"+component+"t_"+start+".png")
+			plt.savefig(directory+"forces_"+component+"t_"+str(start)+".png")
 			plt.show()
 
 		elif sys.argv[2] == "yPlus":
@@ -263,7 +265,7 @@ if __name__ == "__main__":
 			ax1 = fig.gca()
 			fig.suptitle("yPlus values")
 
-			frames = glob(directory+"yPlus_*")
+			frames = glob(directory+"yPlus_*.csv")
 			for patch in frames:
 				for patchname in patchnames:
 					if patch.find(patchname) is not -1:
@@ -276,7 +278,7 @@ if __name__ == "__main__":
 						ax1.plot(df.index,df.iloc[:,2].values,label="{} max".format(patchname))
 
 			ax1.legend(loc="best")
-			plt.savefig(directory+"yPlus_t{}.png".format(start))
+			plt.savefig(directory+"yPlus_{}_t{}.png".format(patchnames[:],start))
 			plt.show()
 
 	# compare method
