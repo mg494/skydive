@@ -153,6 +153,8 @@ def addLog(description,new_result=True):
 	logfile.write("\t\t\t"+description+"\n")
 	logfile.close()
 
+def plotFrameToAxis(axindex,comp):
+	axs[axindex].plot(df.index,df["f"+comp],label='f'+comp)
 
 """
 case = "ballute_snappy"
@@ -220,49 +222,65 @@ if __name__ == "__main__":
 			sys.exit("error: entity name needed")
 
 		# handle options
-		if  "-s" in sys.argv[3:]:
-			start = int(sys.argv[-1])
-		else:
-			start=1
+		start = 1
+		components = "xy"
+		for index,option in enumerate(sys.argv):
+			if  "-s" in option:
+				print(index)
+				start = int(sys.argv[index+1])
+				print(start)
+			if "-c" in option:
+				components = sys.argv[index+1]
+
+
 		# where to read from
 		directory = sys.argv[3]
 
 		# handle entities to plot
 		if sys.argv[2] == "forces":
 			df = pd.read_csv(directory+"forces.csv")
-			print(df.size)
 			fig1, axs = plt.subplots(2,1)
 			fig1.suptitle("Kraefte stationaer")
-			if start != 1:
+			if start is not 1:
 				df = df.truncate(before=start)
-				print(df.size)
 
+			for component in components:
+				plotFrameToAxis(0,"p"+component)
+				plotFrameToAxis(1,"v"+component)
+
+			"""
 			axs[0].plot(df.index,df["fpx"],label='fpx')
 			axs[0].plot(df.index,df["fpy"],label='fpy')
-			axs[0].set_ylabel('Pressure Forces')
-			axs[0].legend(loc='best')
 
 			axs[1].plot(df.index,df["fvx"],label='fvx')
 			axs[1].plot(df.index,df["fvy"],label='fvy')
+			"""
+			# labels
+			axs[0].set_ylabel('Pressure Forces')
+			axs[0].legend(loc='best')
 			axs[1].set_ylabel('Viscous Forces')
 			axs[1].legend(loc='best')
 
 			axs[-1].set_xlabel('Iterations')
 			print(df.head())
 			print(df.tail())
-			plt.savefig(directory+"forces.png")
+			plt.savefig(directory+"forces_"+component+"t_"+start+".png")
 			plt.show()
 
 		elif sys.argv[2] == "yPlus":
 
 			fig = plt.figure()
 			ax1 = fig.gca()
+			fig.suptitle("yPlus values")
 
 			frames = glob(directory+"yPlus_*")
 			for patch in frames:
 				df = pd.read_csv(patch)
-				ax1.plot(df.index,df.iloc[:,1].values,df.index,df.iloc[:,2].values)
+				ax1.plot(df.index,df.iloc[:,1].values,label="min")
+				ax1.plot(df.index,df.iloc[:,2].values,label="max")
 
+			ax1.legend(loc="best")
+			plt.savefig(directory+"yPlus.png")
 			plt.show()
 
 			"""
@@ -296,6 +314,7 @@ if __name__ == "__main__":
 	# compare method
 	elif sys.argv[1] == "compare":
 		compare()
+
 	else:
 		print("unknown command")
 
