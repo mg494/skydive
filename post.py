@@ -63,29 +63,31 @@ def getyPlus():
 	filelist = os.listdir(source_path)
 	number_of_timesteps = len(filelist)
 	# get patch names from abitrary file
-	file = open(source_path+"/"+filelist[0])
-	lines = file.readlines()
-	lines = lines[2:]
 	patchnames = []
+	file = open(source_path+"/"+filelist[0])
+	lines = file.readlines()[2:]
 	for line in lines:
 		patchnames.append(line.split()[1])
+	file.close()
 
 	# get patch values
 	t = []; patch = []; min = []; max = []
 	for filename in filelist:
 		file = open(source_path+"/"+filename)
 		lines = file.readlines()
-
 		for line in lines[2:]:	# skip header lines
 			t.append(int(line.split()[0]))
 			patch.append(line.split()[1])
 			min.append(float(line.split()[2]))
 			max.append(float(line.split()[3]))
+		file.close()
 
+	# put errthang in a Dataframe
 	all_files = pd.DataFrame(data={"patch":patch,"min":min,"max":max})
 	all_files.index = t
 	all_files.index.name = "Iter"
 
+	# return frame sorted by patches
 	all_files.sort_values("patch",inplace=True)
 	return all_files, number_of_timesteps
 
@@ -230,7 +232,7 @@ if __name__ == "__main__":
 
 			# split the frame by patches
 			#no_of_patches = len(frames_to_store.patch.unique())
-			data_by_patches = np.split(getyPlus()[0],[31],axis=0)
+			data_by_patches = np.split(getyPlus()[0],[getyPlus()[1]],axis=0)
 
 			# store all frames separately
 			for frame in data_by_patches:
