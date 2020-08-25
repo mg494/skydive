@@ -249,12 +249,14 @@ if __name__ == "__main__":
 		# handle options
 		start = 1
 		components = "xy"
+		drag_bool = False
 		for index,option in enumerate(sys.argv):
 			if  "-s" in option:
 				start = int(sys.argv[index+1])
 			if "-c" in option:
 				components = sys.argv[index+1]
-
+			if "--drag" in option:
+				drag_bool = True
 
 		# where to read from
 		directory = sys.argv[3]
@@ -262,26 +264,34 @@ if __name__ == "__main__":
 		# handle entities to plot
 		if sys.argv[2] == "forces":
 			df = pd.read_csv(directory+"forces.csv")
+
+			# calculate coefficant of drag
+			if drag_bool: df.fpy=df.fpy
+
+			# initalize for plots
 			fig1, axs = plt.subplots(2,1)
 			fig1.suptitle("Kraefte stationaer")
+
+			# truncate to zoom in at the end
 			if start is not 1:
 				df = df.truncate(before=start)
-
+			# plot the pressure and viscous force components
 			for component in components:
 				plotFrameToAxis(0,"p"+component)
 				plotFrameToAxis(1,"v"+component)
-			if len(components) > 1:
-				component = ""
 
-			# labels
+			# graphics
 			axs[0].set_ylabel('Pressure Forces')
 			axs[0].legend(loc='best')
 			axs[1].set_ylabel('Viscous Forces')
 			axs[1].legend(loc='best')
-
 			axs[-1].set_xlabel('Iterations')
+
+			# command line output
 			print(df.head())
 			print(df.tail())
+
+			# export figure
 			plt.savefig(directory+"forces_"+component+"t_"+str(start)+".png")
 			plt.show()
 
