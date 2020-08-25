@@ -2,38 +2,11 @@
 
 #cd ${0%/*} || exit 1
 
-#cleaning
-./Allclean
-
-#copying boundary conditions from origin to match cell numbers in case of mesh changes
-cp 0.orig/* 0/
-
-#adding backround mesh
-blockMesh
-
-# refining mesh, deleting inner cells and extruding top patch
-foamDictionary -entry "castellatedMesh" -set "on" ./system/snappyHexMeshDict
-foamDictionary -entry "snap" -set "off" ./system/snappyHexMeshDict
-foamDictionary -entry "addLayers" -set "off" ./system/snappyHexMeshDict
-snappyHexMesh -overwrite
-extrudeMesh
-
-# snapping mesh to stl surface and removing old files from 3D mesh
-foamDictionary -entry "castellatedMesh" -set "off" system/snappyHexMeshDict
-foamDictionary -entry "snap" -set "on" system/snappyHexMeshDict
-foamDictionary -entry "addLayers" -set "off" system/snappyHexMeshDict
-rm constant/polyMesh/*Level
-snappyHexMesh -overwrite
-changeDictionary
-
-#adding Layers
-foamDictionary -entry "castellatedMesh" -set "off" system/snappyHexMeshDict
-foamDictionary -entry "snap" -set "off" system/snappyHexMeshDict
-foamDictionary -entry "addLayers" -set "on" system/snappyHexMeshDict
-snappyHexMesh -overwrite
-
-#checking Mesh
-checkMesh
+# meshing
+if [ $1 = "mesh" ]
+then
+	./meshStart &
+fi
 
 #starting solver for initial velocity field
 potentialFoam > logp &
