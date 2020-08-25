@@ -91,7 +91,7 @@ addLayersControls
     nBufferCellsNoExtrude 0;
     additionalReporting false;
     relativeSizes   false;
-    expansionRatio  1.15;
+    expansionRatio  1.4;
     minThickness    0.0001;
     firstLayerThickness 0.002;
     layers
