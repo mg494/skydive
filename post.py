@@ -9,7 +9,7 @@ from datetime import datetime
 
 ###--------------------store function--------------------------###
 
-def getForces():
+def getForces(source_path):
 	# make regular expressions
 	scalarStr = r"([0-9.eE\-+]+)"
 	vectorStr = r"\(([0-9.eE\-+]+)\s([0-9.eE\-+]+)\s([0-9.eE\-+]+)\)"
@@ -25,7 +25,8 @@ def getForces():
 	mpox = []; mpoy = []; mpoz = []
 	mvx = []; mvy = []; mvz = []
 
-	pipefile = open('./postProcessing/forcesIncompressible/0/forces.dat','r')
+	pipefile = open(source_path+"/forces.dat",'r')
+	#pipefile = open('./postProcessing/forcesIncompressible/0/forces.dat','r')
 	lines = pipefile.readlines()
 
 	for line in lines:
@@ -60,7 +61,7 @@ def getForces():
 def getyPlus():
 	source_path = os.getcwd()+"/postProcessing/yPlus/0"
 	filelist = os.listdir(source_path)
-
+	number_of_timesteps = len(filelist)
 	# get patch names from abitrary file
 	file = open(source_path+"/"+filelist[0])
 	lines = file.readlines()
@@ -86,8 +87,7 @@ def getyPlus():
 	all_files.index.name = "Iter"
 
 	all_files.sort_values("patch",inplace=True)
-	data_by_patches = np.split(all_files,[18],axis=0)
-	return data_by_patches
+	return all_files, number_of_timesteps
 
 ##-----------------plot-function----------------------###
 def plotForces(case,start=1):
@@ -196,11 +196,44 @@ if __name__ == "__main__":
 		# get the values
 		# storing the dataframes
 		if sys.argv[2] == "forces":
-			frames_to_store = getForces()
+
+			# init an empty Dataframe to append to
+			frames_to_store = pd.DataFrame()
+
+			# get the list of time folders
+			postProcessing_directory = "./postProcessing/forcesIncompressible/"
+			time_directories = os.listdir(postProcessing_directory)
+			for time_directory in time_directories:
+				path = postProcessing_directory+time_directory
+				frames_to_store=frames_to_store.append(other=getForces(path))
+
+			# store the frames
 			frames_to_store.to_csv("./storage/"+directories[-1]+"/forces.csv")
+
+		# get the yPlus values
+		# store the dataframes
 		elif sys.argv[2] == "yPlus":
-			frames_to_store = getyPlus()
-			for frame in frames_to_store:
+
+			"""
+			# init an empty Dataframe to append to
+			frames_to_store = pd.DataFrame()
+			no_of_timesteps = 0
+			# get the list of time folders
+			postProcessing_directory = "./postProcessing/yPlus/"
+			time_directories = os.listdir(postProcessing_directory)
+			for time_directory in time_directories:
+				path = postProcessing_directory+time_directory
+				frames_to_store=frames_to_store.append(other=getyPlus(path)[0])
+				no_of_timesteps += getyPlus(path)[1]
+			print(no_of_timesteps)
+			"""
+
+			# split the frame by patches
+			#no_of_patches = len(frames_to_store.patch.unique())
+			data_by_patches = np.split(getyPlus()[0],[31],axis=0)
+
+			# store all frames separately
+			for frame in data_by_patches:
 				name = frame.patch[0]
 				frame.drop("patch",axis=1,inplace=True)
 				frame.sort_index(ascending=True,inplace=True)
