@@ -59,7 +59,7 @@ def getForces(source_path):
 	return force_df
 
 def getyPlus():
-	source_path = os.getcwd()+"/postProcessing/yPlus/0"
+	source_path = "./postProcessing/yPlus/0"
 	filelist = os.listdir(source_path)
 	number_of_timesteps = len(filelist)
 	# get patch names from abitrary file
@@ -135,7 +135,7 @@ def compare(cases,niter = 0):
 
 
 def initLog():
-	logfile = open(os.getcwd()+"/resultlog","w")
+	logfile = open("./resultlog","w")
 	now = datetime.now()
 	timestr = now.strftime("%Y-%m-%d_%H-%M")
 	logfile.write(timestr+"\t"+"initialized resultlog"+"\n")
