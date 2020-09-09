@@ -23,7 +23,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         7000;
+endTime         10000;
 
 deltaT          1;
 
@@ -47,6 +47,11 @@ runTimeModifiable true;
 
 functions
 {
+
+	#includeFunc residuals 
+	#includeFunc forcesIncompressible
+	#includeFunc forceCoeffsIncompressible
+	#includeFunc yPlus
 
 }
 
