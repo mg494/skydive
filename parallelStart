@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-decomposePar
-mpirun -np 2 pimpleFoam > log &
+decomposePar > logd &
+mpirun -np 2 simpleFoam > log &
 
