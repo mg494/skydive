@@ -2,7 +2,4 @@
 
 simpleFoam > log &
 sleep 30
-foamMonitor -l postProcessing/residuals/0/residuals.dat &
-sleep 60
-foamMonitor postProcessing/forcesIncompressible/0/forces.dat &
-
+./monitor &
