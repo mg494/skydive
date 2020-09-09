@@ -3,10 +3,15 @@
 #cd ${0%/*} || exit 1
 
 # meshing
-if [ $1 = "mesh" ]
+if [[ $1 == "mesh" ]]
 then
 	./meshStart &
 fi
+
+
+#copying boundary conditions from origin to match cell numbers in case of mesh changes
+rm -rf 0/
+cp -r 0.orig/ 0/
 
 #starting solver for initial velocity field
 potentialFoam > logp &

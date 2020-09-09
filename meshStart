@@ -5,9 +5,6 @@
 #cleaning
 ./Allclean
 
-#copying boundary conditions from origin to match cell numbers in case of mesh changes
-cp 0.orig/* 0/
-
 #adding backround mesh
 blockMesh
 

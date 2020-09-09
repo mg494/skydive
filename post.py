@@ -38,35 +38,59 @@ def getForces(source_path, force_keys=["fpx", "fpy", "fpz", "fvx", "fvy", "fvz"]
 	return force_df
 
 def getyPlus():
-	source_path = os.getcwd()+"/postProcessing/yPlus/0"
+	source_path = "./postProcessing/yPlus/0"
 	filelist = os.listdir(source_path)
 	number_of_timesteps = len(filelist)
 	# get patch names from abitrary file
-	file = open(source_path+"/"+filelist[0])
-	lines = file.readlines()
-	lines = lines[2:]
 	patchnames = []
+	file = open(source_path+"/"+filelist[0])
+	lines = file.readlines()[2:]
 	for line in lines:
 		patchnames.append(line.split()[1])
+	file.close()
 
 	# get patch values
 	t = []; patch = []; min = []; max = []
 	for filename in filelist:
 		file = open(source_path+"/"+filename)
 		lines = file.readlines()
-
 		for line in lines[2:]:	# skip header lines
 			t.append(int(line.split()[0]))
 			patch.append(line.split()[1])
 			min.append(float(line.split()[2]))
 			max.append(float(line.split()[3]))
+		file.close()
 
+	# put errthang in a Dataframe
 	all_files = pd.DataFrame(data={"patch":patch,"min":min,"max":max})
 	all_files.index = t
 	all_files.index.name = "Iter"
 
+	# return frame sorted by patches
 	all_files.sort_values("patch",inplace=True)
 	return all_files, number_of_timesteps
+
+def getCoeffs():
+	source_path = "./postProcessing/forceCoeffsIncompressible/0"
+	filelist = os.listdir(source_path)
+	number_of_timesteps = len(filelist)
+
+	# get values
+	t = []; Cd = []; Cl = []
+	for filename in filelist:
+		file = open(source_path+"/"+filename)
+		line = file.readlines()[-1]
+
+		t.append(int(line.split()[0]))
+		Cd.append(float(line.split()[2]))
+		Cl.append(float(line.split()[3]))
+
+	data = pd.DataFrame(data={"Cd":Cd,"Cl":Cl})
+	data.index = t
+	data.index.name = "Iter"
+	data.sort_index(inplace=True)
+
+	return data
 
 ##-----------------plot-function----------------------###
 def plotForces(case,start=1):
@@ -112,7 +136,7 @@ def compare(cases,niter = 0):
 
 
 def initLog():
-	logfile = open(os.getcwd()+"/resultlog","w")
+	logfile = open("./resultlog","w")
 	now = datetime.now()
 	timestr = now.strftime("%Y-%m-%d_%H-%M")
 	logfile.write(timestr+"\t"+"initialized resultlog"+"\n")
@@ -194,23 +218,8 @@ if __name__ == "__main__":
 		# store the dataframes
 		elif sys.argv[2] == "yPlus":
 
-			"""
-			# init an empty Dataframe to append to
-			frames_to_store = pd.DataFrame()
-			no_of_timesteps = 0
-			# get the list of time folders
-			postProcessing_directory = "./postProcessing/yPlus/"
-			time_directories = os.listdir(postProcessing_directory)
-			for time_directory in time_directories:
-				path = postProcessing_directory+time_directory
-				frames_to_store=frames_to_store.append(other=getyPlus(path)[0])
-				no_of_timesteps += getyPlus(path)[1]
-			print(no_of_timesteps)
-			"""
-
 			# split the frame by patches
-			#no_of_patches = len(frames_to_store.patch.unique())
-			data_by_patches = np.split(getyPlus()[0],[31],axis=0)
+			data_by_patches = np.split(getyPlus()[0],[getyPlus()[1]],axis=0)
 
 			# store all frames separately
 			for frame in data_by_patches:
@@ -218,6 +227,9 @@ if __name__ == "__main__":
 				frame.drop("patch",axis=1,inplace=True)
 				frame.sort_index(ascending=True,inplace=True)
 				frame.to_csv("./storage/"+directories[-1]+"/yPlus_"+name+".csv")
+
+		elif sys.argv[2] == "coeffs":
+			getCoeffs().to_csv("./storage/"+directories[-1]+"/Coeffs.csv")
 
 	# plot method should plot the stored data from the latest directory
 	elif sys.argv[1] == "plot":
@@ -227,12 +239,12 @@ if __name__ == "__main__":
 		# handle options
 		start = 1
 		components = "xy"
+		drag_bool = False
 		for index,option in enumerate(sys.argv):
 			if  "-s" in option:
 				start = int(sys.argv[index+1])
 			if "-c" in option:
 				components = sys.argv[index+1]
-
 
 		# where to read from
 		directory = sys.argv[3]
@@ -240,26 +252,31 @@ if __name__ == "__main__":
 		# handle entities to plot
 		if sys.argv[2] == "forces":
 			df = pd.read_csv(directory+"forces.csv")
+
+			# initalize for plots
 			fig1, axs = plt.subplots(2,1)
 			fig1.suptitle("Kraefte stationaer")
+
+			# truncate to zoom in at the end
 			if start is not 1:
 				df = df.truncate(before=start)
-
+			# plot the pressure and viscous force components
 			for component in components:
 				plotFrameToAxis(0,"p"+component)
 				plotFrameToAxis(1,"v"+component)
-			if len(components) > 1:
-				component = ""
 
-			# labels
+			# graphics
 			axs[0].set_ylabel('Pressure Forces')
 			axs[0].legend(loc='best')
 			axs[1].set_ylabel('Viscous Forces')
 			axs[1].legend(loc='best')
-
 			axs[-1].set_xlabel('Iterations')
+
+			# command line output
 			print(df.head())
 			print(df.tail())
+
+			# export figure
 			plt.savefig(directory+"forces_"+component+"t_"+str(start)+".png")
 			plt.show()
 
@@ -293,6 +310,32 @@ if __name__ == "__main__":
 			ax1.legend(loc="best")
 			plt.savefig(directory+"yPlus_{}_t{}.png".format(patchnames[:],start))
 			plt.show()
+
+		elif sys.argv[2] == "coeffs":
+
+			# handle options
+			start = 1
+			patchnames = ""
+			for index,option in enumerate(sys.argv):
+				if  "-s" in option:
+					start = int(sys.argv[index+1])
+
+			fig = plt.figure()
+			ax1 = fig.gca()
+			fig.suptitle("Drag and Lift Coefficient")
+
+			df = pd.read_csv(directory+"Coeffs.csv")
+			#df.index = df.index.values *100
+			if start is not 1:
+				df = df.truncate(before=start)
+
+			ax1.plot(df.index,df.iloc[:,1].values)
+			ax1.plot(df.index,df.iloc[:,2].values)
+
+			ax1.legend(loc="best")
+			plt.savefig(directory+"coeffs_t{}.png".format(start))
+			plt.show()
+
 
 	# compare method
 	elif sys.argv[1] == "compare":

@@ -1,0 +1,14 @@
+2020-08-22_11-57	initialized resultlog
+------
+2020-08-22_12-04	nLayer=4, expansion=1.15, firstCell=0.002
+------
+2020-08-24_21-32	nLayer=4, expansion=1.4, firstCell=0.002
+			yPlus didnt change, prop bc firstCell is the same
+			mean value of fpy is around 575N
+			ballute has a diameter of ~3.8m, should be 1.905m
+------
+2020-08-25_17-48	same layer settings, ballute scaled down to 1.908m
+			still not really convergent, ~240N at 5000 iterations
+			yPlus values unchanged
+			scaling changed velocity field fundamentaly, no oscillating force, Karman vortex street visible
+			solution unstable after 5.5-6k iterations, cd and cl are not converging or oscillating anymore
