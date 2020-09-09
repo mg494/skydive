@@ -1,8 +1,1 @@
-2020-08-22_11-57	initialized resultlog
-------
-2020-08-22_12-04	nLayer=4, expansion=1.15, firstCell=0.002
-------
-2020-08-24_21-32	nLayer=4, expansion=1.4, firstCell=0.002
-			yPlus didnt change, prop bc firstCell is the same
-			mean value of fpy is around 575N
-			ballute has a diameter of ~3.8m, should be 1.905m
+2020-09-09_22-41	initialized resultlog
