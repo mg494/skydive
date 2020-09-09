@@ -11,7 +11,8 @@ fi
 
 #copying boundary conditions from origin to match cell numbers in case of mesh changes
 rm -rf 0/
-cp -r 0.orig/ 0/
+mkdir 0/
+cp -r 0.orig/* 0/
 
 #starting solver for initial velocity field
 potentialFoam > logp &
