@@ -9,7 +9,7 @@ from datetime import datetime
 
 ###--------------------store function--------------------------###
 
-def getForces(source_path):
+def getForces(source_path, force_keys=["fpx", "fpy", "fpz", "fvx", "fvy", "fvz"]):
 	# make regular expressions
 	scalarStr = r"([0-9.eE\-+]+)"
 	vectorStr = r"\(([0-9.eE\-+]+)\s([0-9.eE\-+]+)\s([0-9.eE\-+]+)\)"
@@ -17,43 +17,22 @@ def getForces(source_path):
 	threeVectorStr = r"\({}{}{}{}{}\)".format(vectorStr,space,vectorStr,space,vectorStr)
 	forceRegex = r"{}{}{}{}{}".format(scalarStr,space,threeVectorStr,space,threeVectorStr)
 
-	t = []
-	fpx = []; fpy = []; fpz = []
-	fpox = []; fpoy = []; fpoz = []
-	fvx = []; fvy = []; fvz = []
-	mpx = []; mpy = []; mpz = []
-	mpox = []; mpoy = []; mpoz = []
-	mvx = []; mvy = []; mvz = []
+	data_keys = ['t', 'fpx','fpy', 'fpz', 'fvx', 'fvy','fvz', 'fpox', 'fpoy', 'fpoz', 'mpx', 'mpy', 'mpz', 'mvx', 'mvy', 'mvz', 'mpox', 'mpoy', 'mpoz']
+	data = dict.fromkeys(data_keys, [])
 
 	pipefile = open(source_path+"/forces.dat",'r')
 	#pipefile = open('./postProcessing/forcesIncompressible/0/forces.dat','r')
 	lines = pipefile.readlines()
 
 	for line in lines:
-	        match = re.search(forceRegex,line)
-	        if match:
-	                t.append(float(match.group(1)))
-	                fpx.append(float(match.group(2)))
-	                fpy.append(float(match.group(3)))
-	                fpz.append(float(match.group(4)))
-	                fvx.append(float(match.group(5)))
-	                fvy.append(float(match.group(6)))
-	                fvz.append(float(match.group(7)))
-	                fpox.append(float(match.group(8)))
-	                fpoy.append(float(match.group(9)))
-	                fpoz.append(float(match.group(10)))
-	                mpx.append(float(match.group(11)))
-	                mpy.append(float(match.group(12)))
-	                mpz.append(float(match.group(13)))
-	                mvx.append(float(match.group(14)))
-	                mvy.append(float(match.group(15)))
-	                mvz.append(float(match.group(16)))
-	                mpox.append(float(match.group(17)))
-	                mpoy.append(float(match.group(18)))
-	                mpoz.append(float(match.group(19)))
+			match = re.search(forceRegex,line)
+			if match:
+				for groupID, key in zip(range(1, 20), data_keys):
+					data[key].append(float(match.group(groupID)))
 
-	force_df = pd.DataFrame(data={"fpx":fpx,"fpy":fpy,"fpz":fpz,"fvx":fvx,"fvy":fvy,"fvz":fvz})
-	force_df.index = t
+	
+	force_df = pd.DataFrame(data={k: data[k] for k in force_keys})
+	force_df.index = data['t']
 	force_df.index.name = "Iter"
 
 	return force_df
@@ -138,6 +117,7 @@ def initLog():
 	timestr = now.strftime("%Y-%m-%d_%H-%M")
 	logfile.write(timestr+"\t"+"initialized resultlog"+"\n")
 	logfile.close()
+	print('init done')
 	return timestr
 
 def addLog(description,new_result=True):
