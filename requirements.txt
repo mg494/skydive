@@ -1,0 +1,5 @@
+matplotlib>=3.0.0
+pandas
+numpy
+optparse
+paraview
