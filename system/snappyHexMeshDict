@@ -57,6 +57,16 @@ castellatedMeshControls
             mode            inside;
             levels          ( ( 1 4 ) );
         }
+        circ_fence_left
+        {
+            mode            inside;
+            levels          ( ( 1 5 ) );
+        }
+        circ_fence_right
+        {
+            mode            inside;
+            levels          ( ( 1 5 ) );
+        }
     }
     locationInMesh  ( 0 -1 -0.15 );
 }
@@ -91,9 +101,9 @@ addLayersControls
     nBufferCellsNoExtrude 0;
     additionalReporting false;
     relativeSizes   false;
-    expansionRatio  1.4;
+    expansionRatio  1.3;
     minThickness    0.0001;
-    firstLayerThickness 0.002;
+    firstLayerThickness 0.0026;
     layers
     {
         ballute
@@ -154,6 +164,20 @@ geometry
         point1          ( 0 2 -0.3 );
         point2          ( 0 2 0 );
         radius          2.5;
+    }
+    circ_fence_left
+    {
+        type            searchableCylinder;
+        point1          ( -0.775 1.4381 -0.3 );
+        point2          ( -0.775 1.4381 0 );
+        radius          0.35;
+    }
+    circ_fence_right
+    {
+        type            searchableCylinder;
+        point1          ( 0.775 1.4381 -0.3 );
+        point2          ( 0.775 1.4381 0 );
+        radius          0.35;
     }
 }
 
