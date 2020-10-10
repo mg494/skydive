@@ -15,8 +15,8 @@ Description
 patches     (ballute);
 
 magUInf     29.7;
-lRef        1;
-Aref        1;
+lRef        2;
+Aref        2.85;		// m2, d=1.905m 
 
 liftDir     (1 0 0);
 dragDir     (0 1 0);
